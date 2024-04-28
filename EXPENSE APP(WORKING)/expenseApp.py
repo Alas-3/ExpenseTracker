@@ -17,6 +17,14 @@ c.execute('''CREATE TABLE IF NOT EXISTS users
 c.execute('''CREATE TABLE IF NOT EXISTS expenses
              (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, category TEXT, date TEXT)''')
 
+# Add admin account if not exists
+c.execute("SELECT * FROM users WHERE username='admin'")
+admin_exists = c.fetchone()
+if not admin_exists:
+    c.execute("INSERT INTO users (first_name, last_name, email, age, sex, contact_number, username, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+              ("Admin", "Admin", "admin@example.com", 0, "NA", "NA", "admin", "password"))
+    conn.commit()
+
 # Function to handle user registration
 def register_user():
     first_name = first_name_entry.get()
@@ -54,6 +62,19 @@ def register_user():
               (first_name, last_name, email, age, sex, contact_number, username, password))
     conn.commit()
     messagebox.showinfo("Success", "Registration successful")
+    # Clear fields after successful registration
+    clear_register_fields()
+
+# Function to clear registration fields
+def clear_register_fields():
+    first_name_entry.delete(0, tk.END)
+    last_name_entry.delete(0, tk.END)
+    email_entry.delete(0, tk.END)
+    age_entry.delete(0, tk.END)
+    sex_var.set(None)  # Clear radio button selection
+    contact_number_entry.delete(0, tk.END)
+    register_username_entry.delete(0, tk.END)
+    register_password_entry.delete(0, tk.END)
 
 # Function to handle user login
 def login():
@@ -69,11 +90,23 @@ def login():
     c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
     user = c.fetchone()
     if user:
-        # Proceed to main app screen
-        messagebox.showinfo("Success", "Login successful")
-        main_app_screen(user[0])  # Pass user ID to main app screen function
+        if username == 'admin':  # Check if the logged-in user is admin
+            # Proceed to admin dashboard
+            messagebox.showinfo("Success", "Login successful as admin")
+            admin_dashboard()
+        else:
+            # Proceed to main app screen for regular users
+            messagebox.showinfo("Success", "Login successful")
+            main_app_screen(user[0])  # Pass user ID to main app screen function
+        # Clear fields after successful login
+        clear_login_fields()
     else:
         messagebox.showerror("Error", "Invalid username or password")
+
+# Function to clear login fields
+def clear_login_fields():
+    login_username_entry.delete(0, tk.END)
+    login_password_entry.delete(0, tk.END)
 
 # Function to handle user logout
 def logout():
@@ -206,6 +239,72 @@ def main_app_screen(user_id):
     # Logout button
     logout_button = tk.Button(main_app_window, text="Logout", command=logout_from_main_app)
     logout_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5)
+
+# Function to handle user deletion
+def delete_user():
+    selected_item = user_tree.selection()
+    if selected_item:
+        user_id = user_tree.item(selected_item, 'values')[0]
+        c.execute("DELETE FROM users WHERE id=?", (user_id,))
+        conn.commit()
+        messagebox.showinfo("Success", "User deleted successfully")
+        update_user_list()
+    else:
+        messagebox.showerror("Error", "Please select a user to delete")
+
+# Function to update user list
+def update_user_list():
+    # Clear current user list
+    for row in user_tree.get_children():
+        user_tree.delete(row)
+    # Fetch and display all user accounts
+    c.execute("SELECT * FROM users")
+    users = c.fetchall()
+    for user in users:
+        user_tree.insert('', 'end', values=user)
+
+# Function to handle admin logout
+def logout_admin(admin_window):
+    # Close the admin dashboard window
+    admin_window.destroy()
+    # Re-display the login window
+    login_window.deiconify()
+
+# Admin Dashboard
+def admin_dashboard():
+    # Close login window
+    login_window.withdraw()
+
+    # Create admin dashboard window
+    admin_window = tk.Toplevel()
+    admin_window.title("Admin Dashboard")
+
+    # User Treeview
+    global user_tree
+    user_tree = ttk.Treeview(admin_window, columns=('ID', 'First Name', 'Last Name', 'Email', 'Age', 'Sex', 'Contact Number', 'Username', 'Password'), show='headings')
+    user_tree.pack(padx=10, pady=5)
+
+    user_tree.heading('ID', text='ID')
+    user_tree.heading('First Name', text='First Name')
+    user_tree.heading('Last Name', text='Last Name')
+    user_tree.heading('Email', text='Email')
+    user_tree.heading('Age', text='Age')
+    user_tree.heading('Sex', text='Sex')
+    user_tree.heading('Contact Number', text='Contact Number')
+    user_tree.heading('Username', text='Username')
+    user_tree.heading('Password', text='Password')
+
+    # Fetch and display all user accounts
+    update_user_list()
+
+    # Delete User Button
+    delete_user_button = tk.Button(admin_window, text="Delete User", command=delete_user)
+    delete_user_button.pack(pady=10)
+
+    # Admin logout button
+    logout_button = tk.Button(admin_window, text="Logout", command=lambda: logout_admin(admin_window))
+    logout_button.pack(pady=10)
+
 
 # Validation function for amount entry
 def validate_amount(value):
