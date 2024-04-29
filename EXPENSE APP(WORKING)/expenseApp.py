@@ -2,8 +2,10 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
 from datetime import datetime
+from datetime import timedelta
 import re
 from tkcalendar import DateEntry  # Import DateEntry widget from tkcalendar
+import calendar
 
 # Database initialization
 conn = sqlite3.connect('expense_tracker.db')
@@ -194,6 +196,61 @@ def main_app_screen(user_id):
         category_var.set("Choose Category")  # Set default value in dropdown
         date_entry.set_date(datetime.today())  # Set today's date in DateEntry widget
 
+    # Function to display statistics overview
+    def show_statistics():
+        # Get current date
+        current_date = datetime.today().date()
+
+        # Get start and end dates for this week, this month, and this year
+        start_of_week = current_date - timedelta(days=current_date.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        start_of_month = current_date.replace(day=1)
+        end_of_month = current_date.replace(day=calendar.monthrange(current_date.year, current_date.month)[1])
+        start_of_year = current_date.replace(month=1, day=1)
+        end_of_year = current_date.replace(month=12, day=31)
+
+        # Initialize variables to store total expenses
+        total_today_expense = 0
+        total_week_expense = 0
+        total_month_expense = 0
+        total_year_expense = 0
+
+        # Iterate through items in the expense treeview
+        for item in expense_tree.get_children():
+            values = expense_tree.item(item, 'values')
+            expense_date = datetime.strptime(values[4], '%m/%d/%Y').date()
+            expense_amount = float(values[2][1:].replace(',', ''))  # Remove currency symbol and comma
+            # Check if expense date falls within today
+            if expense_date == current_date:
+                total_today_expense += expense_amount
+            # Check if expense date falls within this week
+            if start_of_week <= expense_date <= end_of_week:
+                total_week_expense += expense_amount
+            # Check if expense date falls within this month
+            if start_of_month <= expense_date <= end_of_month:
+                total_month_expense += expense_amount
+            # Check if expense date falls within this year
+            if start_of_year <= expense_date <= end_of_year:
+                total_year_expense += expense_amount
+
+        # Format total expenses to display two decimal places
+        total_today_expense = "{:.2f}".format(total_today_expense)
+        total_week_expense = "{:.2f}".format(total_week_expense)
+        total_month_expense = "{:.2f}".format(total_month_expense)
+        total_year_expense = "{:.2f}".format(total_year_expense)
+
+        # Display statistics overview
+        messagebox.showinfo(
+            "Statistics Overview",
+            f"Total expense for today: ₱{total_today_expense}\n"
+            f"Total expense for this week: ₱{total_week_expense}\n"
+            f"Total expense for this month: ₱{total_month_expense}\n"
+            f"Total expense for this year: ₱{total_year_expense}"
+        )
+
+
+
+
     # Widgets for adding expenses
     amount_label = tk.Label(main_app_window, text="Amount:")
     amount_label.grid(row=0, column=0, padx=10, pady=5)
@@ -236,9 +293,27 @@ def main_app_screen(user_id):
     delete_expense_button = tk.Button(main_app_window, text="Delete Expense", command=delete_expense)
     delete_expense_button.grid(row=5, column=1, padx=10, pady=5)
 
+    # Statistics overview button
+    stats_button = tk.Button(main_app_window, text="Statistics Overview", command=show_statistics)
+    stats_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5)
+
     # Logout button
     logout_button = tk.Button(main_app_window, text="Logout", command=logout_from_main_app)
-    logout_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5)
+    logout_button.grid(row=7, column=0, columnspan=2, padx=10, pady=5)
+
+# Function to fetch expenses for a specific period
+def fetch_expenses_for_period(user_id, start_date, end_date):
+    # Convert start_date and end_date to the format used in the database ('m/d/y')
+    start_date_str = start_date.strftime('%m/%d/%Y')
+    end_date_str = end_date.strftime('%m/%d/%Y')
+    
+    # Execute SQL query to fetch expenses within the specified period
+    c.execute("SELECT * FROM expenses WHERE user_id=? AND date BETWEEN ? AND ?", (user_id, start_date_str, end_date_str))
+    
+    # Return fetched expenses
+    return c.fetchall()
+
+
 
 # Function to handle user deletion
 def delete_user():
@@ -304,7 +379,6 @@ def admin_dashboard():
     # Admin logout button
     logout_button = tk.Button(admin_window, text="Logout", command=lambda: logout_admin(admin_window))
     logout_button.pack(pady=10)
-
 
 # Validation function for amount entry
 def validate_amount(value):
@@ -390,7 +464,8 @@ register_button.grid(row=8, column=0, columnspan=2, padx=10, pady=5)
 switch_to_login_button = tk.Button(register_window, text="Go Login", command=switch_to_login)
 switch_to_login_button.grid(row=9, column=0, columnspan=2, padx=10, pady=5)
 
+# Start the application loop
 login_window.mainloop()
 
-# Close database connection when the app exits
+# Close database connection
 conn.close()
