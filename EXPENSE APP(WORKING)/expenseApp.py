@@ -4,8 +4,9 @@ import sqlite3
 from datetime import datetime
 from datetime import timedelta
 import re
-from tkcalendar import DateEntry  # Import DateEntry widget from tkcalendar
+from tkcalendar import DateEntry
 import calendar
+from ttkthemes import ThemedTk
 
 # Database initialization
 conn = sqlite3.connect('expense_tracker.db')
@@ -124,8 +125,9 @@ def switch_to_registration():
 
 # Function to switch to the login page
 def switch_to_login():
-    register_window.withdraw()
-    login_window.deiconify()
+    register_window.withdraw()  # Close the registration window
+    login_window.deiconify()    # Display the login window
+
 
 # Function to display main app screen
 def main_app_screen(user_id):
@@ -134,8 +136,13 @@ def main_app_screen(user_id):
 
     # Create main app window
     global main_app_window
-    main_app_window = tk.Toplevel()
+    main_app_window = ThemedTk(theme="plastik")  # Apply theme to the main app window
     main_app_window.title("Expense Tracker - Main App")
+    main_app_window.attributes('-fullscreen', True)  # Set window to full screen
+    main_app_window.geometry("800x600")  # Set window size
+
+    # Center window contents
+    center_window(main_app_window)
 
     # Function to add expense
     def add_expense():
@@ -248,37 +255,40 @@ def main_app_screen(user_id):
             f"Total expense for this year: ₱{total_year_expense}"
         )
 
-
-
+    # Apply styling
+    main_app_window.configure(background="white")  # Set background color
 
     # Widgets for adding expenses
-    amount_label = tk.Label(main_app_window, text="Amount:")
-    amount_label.grid(row=0, column=0, padx=10, pady=5)
+    amount_label = tk.Label(main_app_window, text="Amount:", bg="white")  # Set background color
+    amount_label.pack(padx=10, pady=5, anchor="center")
+
     amount_entry = tk.Entry(main_app_window)
-    amount_entry.grid(row=0, column=1, padx=10, pady=5)
+    amount_entry.pack(padx=10, pady=5, anchor="center")
     amount_entry.config(validate="key", validatecommand=(amount_entry.register(validate_amount), "%P"))
 
-    category_label = tk.Label(main_app_window, text="Category:")
-    category_label.grid(row=1, column=0, padx=10, pady=5)
+    category_label = tk.Label(main_app_window, text="Category:", bg="white")  # Set background color
+    category_label.pack(padx=10, pady=5, anchor="center")
+
     # Dropdown menu for category selection with placeholder
     category_var = tk.StringVar(main_app_window)
     category_var.set("Choose Category")  # Placeholder
-    category_options = ["","Food", "Transportation", "Shopping", "Entertainment", "Utilities", "Health", "Other"]
+    category_options = ["", "Food", "Transportation", "Shopping", "Entertainment", "Utilities", "Health", "Other"]
     category_dropdown = ttk.OptionMenu(main_app_window, category_var, *category_options)
-    category_dropdown.grid(row=1, column=1, padx=10, pady=5)
+    category_dropdown.pack(padx=10, pady=5, anchor="center")
 
-    date_label = tk.Label(main_app_window, text="Date:")
-    date_label.grid(row=2, column=0, padx=10, pady=5)
+    date_label = tk.Label(main_app_window, text="Date:", bg="white")  # Set background color
+    date_label.pack(padx=10, pady=5, anchor="center")
+
     date_entry = DateEntry(main_app_window, date_pattern='m/d/y')  # DateEntry widget for date input
-    date_entry.grid(row=2, column=1, padx=10, pady=5)
+    date_entry.pack(padx=10, pady=5, anchor="center")
 
-    add_expense_button = tk.Button(main_app_window, text="Add Expense", command=add_expense)
-    add_expense_button.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
+    add_expense_button = tk.Button(main_app_window, text="Add Expense", command=add_expense, bg="green", fg="white")  # Set background and foreground color
+    add_expense_button.pack(padx=10, pady=5, anchor="center")
 
     # Expense Treeview
     global expense_tree
     expense_tree = ttk.Treeview(main_app_window, columns=('ID', 'User ID', 'Amount', 'Category', 'Date'), show='headings')
-    expense_tree.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+    expense_tree.pack(padx=10, pady=5, anchor="center")
 
     expense_tree.heading('ID', text='ID')
     expense_tree.heading('User ID', text='User ID')
@@ -286,20 +296,26 @@ def main_app_screen(user_id):
     expense_tree.heading('Category', text='Category')
     expense_tree.heading('Date', text='Date')
 
-    # Update and delete expense buttons
-    update_expense_button = tk.Button(main_app_window, text="Update Expense List", command=update_expense_list)
-    update_expense_button.grid(row=5, column=0, padx=10, pady=5)
+    # Create a frame below the expense tree view
+    button_frame = tk.Frame(main_app_window)
+    button_frame.pack(pady=10)
 
-    delete_expense_button = tk.Button(main_app_window, text="Delete Expense", command=delete_expense)
-    delete_expense_button.grid(row=5, column=1, padx=10, pady=5)
+    # Update and delete expense buttons
+    update_expense_button = tk.Button(button_frame, text="Update Expense List", command=update_expense_list, bg="green", fg="white")  # Set background and foreground color
+    update_expense_button.pack(side="left", padx=10)
+
+    delete_expense_button = tk.Button(button_frame, text="Delete Expense", command=delete_expense, bg="green", fg="white")  # Set background and foreground color
+    delete_expense_button.pack(side="left", padx=10)
 
     # Statistics overview button
-    stats_button = tk.Button(main_app_window, text="Statistics Overview", command=show_statistics)
-    stats_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5)
+    stats_button = tk.Button(button_frame, text="Statistics Overview", command=show_statistics, bg="green", fg="white")  # Set background and foreground color
+    stats_button.pack(side="left", padx=10)
 
     # Logout button
-    logout_button = tk.Button(main_app_window, text="Logout", command=logout_from_main_app)
-    logout_button.grid(row=7, column=0, columnspan=2, padx=10, pady=5)
+    logout_button = tk.Button(button_frame, text="Logout", command=logout_from_main_app, bg="green", fg="white")  # Set background and foreground color
+    logout_button.pack(side="left", padx=10)
+
+
 
 # Function to fetch expenses for a specific period
 def fetch_expenses_for_period(user_id, start_date, end_date):
@@ -312,8 +328,6 @@ def fetch_expenses_for_period(user_id, start_date, end_date):
     
     # Return fetched expenses
     return c.fetchall()
-
-
 
 # Function to handle user deletion
 def delete_user():
@@ -351,13 +365,14 @@ def admin_dashboard():
     login_window.withdraw()
 
     # Create admin dashboard window
-    admin_window = tk.Toplevel()
+    admin_window = tk.Tk()  # Use Tk instead of Toplevel to ensure full-screen behavior
     admin_window.title("Admin Dashboard")
+    admin_window.attributes('-fullscreen', True)  # Open window in full screen
 
     # User Treeview
     global user_tree
     user_tree = ttk.Treeview(admin_window, columns=('ID', 'First Name', 'Last Name', 'Email', 'Age', 'Sex', 'Contact Number', 'Username', 'Password'), show='headings')
-    user_tree.pack(padx=10, pady=5)
+    user_tree.pack(fill="both", expand=True, padx=10, pady=5)
 
     user_tree.heading('ID', text='ID')
     user_tree.heading('First Name', text='First Name')
@@ -369,16 +384,44 @@ def admin_dashboard():
     user_tree.heading('Username', text='Username')
     user_tree.heading('Password', text='Password')
 
+    # Adjusting column widths based on content
+    user_tree.column('ID', width=50)
+    user_tree.column('First Name', width=100)
+    user_tree.column('Last Name', width=100)
+    user_tree.column('Email', width=200)
+    user_tree.column('Age', width=50)
+    user_tree.column('Sex', width=50)
+    user_tree.column('Contact Number', width=150)
+    user_tree.column('Username', width=100)
+    user_tree.column('Password', width=100)
+
+
     # Fetch and display all user accounts
     update_user_list()
 
+    # Button Frame
+    button_frame = tk.Frame(admin_window)
+    button_frame.pack(pady=10)
+
     # Delete User Button
-    delete_user_button = tk.Button(admin_window, text="Delete User", command=delete_user)
-    delete_user_button.pack(pady=10)
+    delete_user_button = tk.Button(button_frame, text="Delete User", command=delete_user, bg="green", fg="white")  # Set background and foreground color
+    delete_user_button.pack(side="left", padx=10)
 
     # Admin logout button
-    logout_button = tk.Button(admin_window, text="Logout", command=lambda: logout_admin(admin_window))
-    logout_button.pack(pady=10)
+    logout_button = tk.Button(button_frame, text="Logout", command=lambda: logout_admin(admin_window), bg="green", fg="white")  # Set background and foreground color
+    logout_button.pack(side="left", padx=10)
+
+    # Center window contents
+    center_window(admin_window)
+
+# Center window function
+def center_window(window):
+    window.update_idletasks()
+    width = window.winfo_screenwidth()
+    height = window.winfo_screenheight()
+    x = (width // 2) - (width // 2)
+    y = (height // 2) - (height // 2)
+    window.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
 # Validation function for amount entry
 def validate_amount(value):
@@ -391,81 +434,92 @@ def validate_amount(value):
         return False
 
 # UI setup for login window
-login_window = tk.Tk()
+login_window = ThemedTk(theme="plastik")  # Apply theme to the login window
 login_window.title("Expense Tracker - Login")
+login_window.configure(background="white")  # Set background color to white
+login_window.attributes('-fullscreen', True)  # Set window to full screen
 
-login_username_label = tk.Label(login_window, text="Username:")
-login_username_label.grid(row=0, column=0, padx=10, pady=5)
-login_username_entry = tk.Entry(login_window)
-login_username_entry.grid(row=0, column=1, padx=10, pady=5)
+login_frame = tk.Frame(login_window, bg="white")  # Set background color
+login_frame.pack(expand=True)
 
-login_password_label = tk.Label(login_window, text="Password:")
-login_password_label.grid(row=1, column=0, padx=10, pady=5)
-login_password_entry = tk.Entry(login_window, show="*")
-login_password_entry.grid(row=1, column=1, padx=10, pady=5)
+login_username_label = tk.Label(login_frame, text="Username:", bg="white", font=("Arial", 14))  # Set background color and font size
+login_username_label.grid(row=0, column=0, padx=10, pady=10, sticky="e")
+login_username_entry = tk.Entry(login_frame, width=40, font=("Arial", 14))  # Adjust width and font size of entry widget
+login_username_entry.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
-login_button = tk.Button(login_window, text="Login", command=login)
-login_button.grid(row=2, column=0, columnspan=2, padx=10, pady=5)
+login_password_label = tk.Label(login_frame, text="Password:", bg="white", font=("Arial", 14))  # Set background color and font size
+login_password_label.grid(row=1, column=0, padx=10, pady=10, sticky="e")
+login_password_entry = tk.Entry(login_frame, show="*", width=40, font=("Arial", 14))  # Adjust width and font size of entry widget
+login_password_entry.grid(row=1, column=1, padx=10, pady=10, sticky="w")
 
-switch_to_register_button = tk.Button(login_window, text="Go Register", command=switch_to_registration)
-switch_to_register_button.grid(row=3, column=0, columnspan=2, padx=10, pady=5)
+login_button = tk.Button(login_frame, text="Login", command=login, bg="green", fg="white", font=("Arial", 14), width=20)  # Adjust font size and width of button widget
+login_button.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+
+switch_to_register_button = tk.Button(login_frame, text="Go Register", command=switch_to_registration, bg="green", fg="white", font=("Arial", 14), width=20)  # Adjust font size and width of button widget
+switch_to_register_button.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
 # UI setup for registration window
-register_window = tk.Toplevel()
+register_window = ThemedTk(theme="plastik")  # Apply theme to the registration window
 register_window.title("Expense Tracker - Register")
-register_window.withdraw()  # Hide registration window initially
+register_window.attributes('-fullscreen', True)  # Set window to full screen
+register_window.configure(background="white")  # Set background color to white
 
-first_name_label = tk.Label(register_window, text="First Name:")
-first_name_label.grid(row=0, column=0, padx=10, pady=5)
-first_name_entry = tk.Entry(register_window)
-first_name_entry.grid(row=0, column=1, padx=10, pady=5)
+# Function to center window contents
+def center_window_content(window):
+    width = window.winfo_reqwidth()
+    height = window.winfo_reqheight()
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+    x = (screen_width // 2) - (width // 2)
+    y = (screen_height // 2) - (height // 2)
+    window.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
-last_name_label = tk.Label(register_window, text="Last Name:")
-last_name_label.grid(row=1, column=0, padx=10, pady=5)
-last_name_entry = tk.Entry(register_window)
-last_name_entry.grid(row=1, column=1, padx=10, pady=5)
+# UI setup for registration frame
+register_frame = tk.Frame(register_window, bg="white")  # Set background color
+register_frame.pack(expand=True, fill="both")  # Make the frame expand to fill the entire window
+register_frame.place(relx=0.5, rely=0.5, anchor="center")  # Center the frame on the screen
 
-email_label = tk.Label(register_window, text="Email:")
-email_label.grid(row=2, column=0, padx=10, pady=5)
-email_entry = tk.Entry(register_window)
-email_entry.grid(row=2, column=1, padx=10, pady=5)
+# Function to create labels and entries with consistent styling
+def create_entry_with_label(label_text, row, column):
+    label = tk.Label(register_frame, text=label_text, bg="white", font=("Arial", 12))  # Set background color and font
+    label.grid(row=row, column=column, padx=10, pady=5, sticky="e")
+    entry = tk.Entry(register_frame, font=("Arial", 12))  # Set font
+    entry.grid(row=row, column=column + 1, padx=10, pady=5, sticky="w")
+    return entry
 
-age_label = tk.Label(register_window, text="Age:")
-age_label.grid(row=3, column=0, padx=10, pady=5)
-age_entry = tk.Entry(register_window)
-age_entry.grid(row=3, column=1, padx=10, pady=5)
+first_name_entry = create_entry_with_label("First Name:", 0, 0)
+last_name_entry = create_entry_with_label("Last Name:", 1, 0)
+email_entry = create_entry_with_label("Email:", 2, 0)
+age_entry = create_entry_with_label("Age:", 3, 0)
+contact_number_entry = create_entry_with_label("Contact Number:", 4, 0)
+register_username_entry = create_entry_with_label("Username:", 5, 0)
+register_password_entry = create_entry_with_label("Password:", 6, 0)
 
-sex_label = tk.Label(register_window, text="Sex:")
-sex_label.grid(row=4, column=0, padx=10, pady=5)
-sex_var = tk.StringVar()
-male_radio = tk.Radiobutton(register_window, text="Male", variable=sex_var, value="Male")
-male_radio.grid(row=4, column=1, padx=10, pady=5)
-female_radio = tk.Radiobutton(register_window, text="Female", variable=sex_var, value="Female")
-female_radio.grid(row=4, column=2, padx=10, pady=5)
+# Radio buttons for sex selection
+sex_label = tk.Label(register_frame, text="Sex:", bg="white", font=("Arial", 12))  # Set background color and font
+sex_label.grid(row=7, column=0, padx=10, pady=5, sticky="e")
+sex_var = tk.StringVar(register_frame)
+sex_var.set("Male")  # Set default value for radio button
+sex_radio_male = tk.Radiobutton(register_frame, text="Male", variable=sex_var, value="Male", bg="white", font=("Arial", 12))  # Set background color and font
+sex_radio_male.grid(row=7, column=1, padx=10, pady=5, sticky="w")
+sex_radio_female = tk.Radiobutton(register_frame, text="Female", variable=sex_var, value="Female", bg="white", font=("Arial", 12))  # Set background color and font
+sex_radio_female.grid(row=7, column=2, padx=10, pady=5, sticky="w")
 
-contact_number_label = tk.Label(register_window, text="Contact Number:")
-contact_number_label.grid(row=5, column=0, padx=10, pady=5)
-contact_number_entry = tk.Entry(register_window)
-contact_number_entry.grid(row=5, column=1, padx=10, pady=5)
+# Register button
+register_button = tk.Button(register_frame, text="Register", command=register_user, bg="green", fg="white", font=("Arial", 12))  # Set background, foreground color, and font
+register_button.grid(row=8, column=0, columnspan=3, pady=10)
 
-register_username_label = tk.Label(register_window, text="Username:")
-register_username_label.grid(row=6, column=0, padx=10, pady=5)
-register_username_entry = tk.Entry(register_window)
-register_username_entry.grid(row=6, column=1, padx=10, pady=5)
+# Switch to login button
+switch_to_login_button = tk.Button(register_frame, text="Go Login", command=switch_to_login, bg="green", fg="white", font=("Arial", 12))  # Set background, foreground color, and font
+switch_to_login_button.grid(row=9, column=0, columnspan=3, pady=10)
 
-register_password_label = tk.Label(register_window, text="Password:")
-register_password_label.grid(row=7, column=0, padx=10, pady=5)
-register_password_entry = tk.Entry(register_window, show="*")
-register_password_entry.grid(row=7, column=1, padx=10, pady=5)
 
-register_button = tk.Button(register_window, text="Register", command=register_user)
-register_button.grid(row=8, column=0, columnspan=2, padx=10, pady=5)
+# Center the login window initially
+center_window(login_window)
 
-switch_to_login_button = tk.Button(register_window, text="Go Login", command=switch_to_login)
-switch_to_login_button.grid(row=9, column=0, columnspan=2, padx=10, pady=5)
-
-# Start the application loop
+# Start the tkinter event loop
 login_window.mainloop()
+
 
 # Close database connection
 conn.close()
